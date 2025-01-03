@@ -5,11 +5,10 @@ using System.Collections.Generic;
 
 public class UnrealToolsTarget : TargetRules
 {
-	public UnrealToolsTarget(TargetInfo Target) : base(Target)
+	public UnrealToolsTarget( TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V5;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
-		ExtraModuleNames.Add("UnrealTools");
+		DefaultBuildSettings = BuildSettingsVersion.V2;
+		ExtraModuleNames.AddRange( new string[] { "UnrealTools" } );
 	}
 }
