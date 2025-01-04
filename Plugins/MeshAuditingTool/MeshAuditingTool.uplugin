@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "MeshAuditingTool",
+	"Description": "A tool used for Auditing specific assets in the asset registry",
+	"Category": "Editor",
+	"CreatedBy": "S6.Ken",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "MeshAuditingTool",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
