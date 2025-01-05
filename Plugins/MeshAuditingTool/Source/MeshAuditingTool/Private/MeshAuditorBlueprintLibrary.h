@@ -41,6 +41,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "MeshAuditingTool")
 	static void AuditAssets(FAuditSettings AuditSettings);
 
+	UFUNCTION(BlueprintPure, Category = "MeshAuditingTool")
+	static int32 AddIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag);
+
+	UFUNCTION(BlueprintPure, Category = "MeshAuditingTool")
+	static int32 RemoveIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag);
+	
 private:
 	UFUNCTION()
 	static TArray<FName> GetClassNamesFromIncludes(int32 Includes);

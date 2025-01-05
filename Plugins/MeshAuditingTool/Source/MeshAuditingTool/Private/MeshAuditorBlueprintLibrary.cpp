@@ -6,6 +6,8 @@
 
 void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings)
 {
+	if (AuditSettings.Includes ==  0) { return; }
+	
 	// Get the Asset Registry module
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	const IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
@@ -35,10 +37,19 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings)
 
 }
 
+int32 UMeshAuditorBlueprintLibrary::AddIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag)
+{
+	return CurrentFlags | static_cast<int32>(AssetFlag);
+}
+
+int32 UMeshAuditorBlueprintLibrary::RemoveIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag)
+{
+	return CurrentFlags & (~static_cast<int32>(AssetFlag));
+}
+
 TArray<FName> UMeshAuditorBlueprintLibrary::GetClassNamesFromIncludes(int32 Includes)
 {
 	TArray<FName> ClassNames = TArray<FName>();
-
 	// Add class names based on user input
 	if (EnumHasAnyFlags(static_cast<EAssetFlags>(Includes), EAssetFlags::StaticMesh))
 		ClassNames.Add(UStaticMesh::StaticClass()->GetFName());
