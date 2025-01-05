@@ -21,12 +21,12 @@ class createEntry_Example(unreal.ToolMenuEntryScript):
     def init_as_toolbar_button(self):
         self.data.menu = owning_menu_name
         self.data.advanced.entry_type = unreal.MultiBlockType.TOOL_BAR_BUTTON
-        self.data.icon = unreal.ScriptSlateIcon("PresenterStyle", "Presenter.Logo")
+        self.data.icon = unreal.ScriptSlateIcon("EditorStyle", "InputBindingEditor.MainFrame")
 
 def Run():    
     entry = createEntry_Example()
     entry.init_as_toolbar_button()
-    entry.init_entry(menu_owner, "editorUtilitiesExampleEntry", "", "", "Example Button", "Opens up an example Editor Utility Widget")
+    entry.init_entry(menu_owner, "editorUtilitiesExampleEntry", "", "", "Mesh Audit Button", "Opens up the Mesh Auditor Tool")
     toolbar = tool_menus.extend_menu(owning_menu_name)
     toolbar.add_menu_entry_object(entry)
     tool_menus.refresh_all_widgets()
