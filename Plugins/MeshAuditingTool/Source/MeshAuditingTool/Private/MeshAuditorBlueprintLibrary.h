@@ -46,14 +46,14 @@ private:
 	static TArray<FName> GetClassNamesFromIncludes(int32 Includes);
 
 	UFUNCTION()
-	static void HandleStaticMesh();
+	static void HandleStaticMesh(const UStaticMesh* StaticMesh);
 
 	UFUNCTION()
-	static void HandleSkeletalMesh();
+	static void HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh);
 
 	UFUNCTION()
-	static void HandleSkeleton();
+	static void HandleSkeleton(const USkeleton* Skeleton);
 
 	UFUNCTION()
-	static void HandleAnimation();
+	static void HandleAnimation(const UAnimSequence* Animation);
 };

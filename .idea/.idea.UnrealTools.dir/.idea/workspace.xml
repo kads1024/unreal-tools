@@ -9,8 +9,9 @@
   <component name="ChangeListManager">
     <list default="true" id="98a787be-b154-42dc-b33d-d97c2c61cc3f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.UnrealTools.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.UnrealTools.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Content/Python/mesh-auditor-setup.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Content/EUW_MeshAuditor.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Content/EUW_MeshAuditor.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -138,7 +139,7 @@
       <workItem from="1736003849693" duration="2899000" />
       <workItem from="1736008920321" duration="1101000" />
       <workItem from="1736010044414" duration="887000" />
-      <workItem from="1736057000511" duration="1519000" />
+      <workItem from="1736057000511" duration="6855000" />
     </task>
     <servers />
   </component>
