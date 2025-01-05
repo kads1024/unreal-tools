@@ -4,9 +4,15 @@
 #include "MeshAuditorBlueprintLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
-void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings)
+DEFINE_LOG_CATEGORY(LogMeshAuditor);
+
+void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAuditType AuditType)
 {
-	if (AuditSettings.Includes ==  0) { return; }
+	if (AuditSettings.Includes ==  0)
+	{
+		UE_LOG(LogMeshAuditor, Log, TEXT("PLEASE SELECT INCLUDES FIRST BEFORE RUNNING AUDITOR"))
+		return;
+	}
 	
 	// Get the Asset Registry module
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -23,18 +29,129 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings)
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
 	// Process the results
-	for (const FAssetData& AssetData : AssetDataList)
+	switch (AuditType)
 	{
-		if (AssetData.AssetClass == UStaticMesh::StaticClass()->GetFName())
-			HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
-		else if (AssetData.AssetClass == USkeletalMesh::StaticClass()->GetFName())
-			HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
-		else if (AssetData.AssetClass == USkeleton::StaticClass()->GetFName())
-			HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
-		else if (AssetData.AssetClass == UAnimSequence::StaticClass()->GetFName())
-			HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
+	case EAuditType::Individual:
+		{
+			UE_LOG(LogMeshAuditor, Display, TEXT("------------------INDIVIDUAL AUDIT RESULTS------------------"));
+			for (const FAssetData& AssetData : AssetDataList)
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("ASSET NAME: %s --------------------------"), *(AssetData.GetAsset()->GetName()));
+				if (AssetData.AssetClass == UStaticMesh::StaticClass()->GetFName())
+				{
+					auto [NumLOD, NumTriangle, NumMaterialSlot] = HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
+					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: STATIC MESH"));
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD)
+					for (int i = 0; i < NumTriangle.Num(); i++)
+						UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, NumTriangle[i]);
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), NumMaterialSlot);
+				}
+				else if (AssetData.AssetClass == USkeletalMesh::StaticClass()->GetFName())
+				{
+					auto [NumLOD, NumTriangle, NumMaterialSlot] = HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
+					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: SKELETAL MESH"));
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD)
+					for (int i = 0; i < NumTriangle.Num(); i++)
+						UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, NumTriangle[i]);
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), NumMaterialSlot);
+				}
+				else if (AssetData.AssetClass == USkeleton::StaticClass()->GetFName())
+				{
+					auto [NumLOD, NumBones] = HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
+					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: SKELETON"));
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD);
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Bones: %llu"), NumBones);
+				}
+				else if (AssetData.AssetClass == UAnimSequence::StaticClass()->GetFName())
+				{
+					auto [NumKeyFrames] = HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
+					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: ANIMATION"));
+					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Key Frames: %llu"), NumKeyFrames);
+				}
+				UE_LOG(LogMeshAuditor, Display, TEXT("------------------------------------------------------------"));
+			}
+			UE_LOG(LogMeshAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+		}
+		break;
+	case EAuditType::Total:
+		{
+			FMeshData StaticMeshData = {};
+			FMeshData SkeletalMeshData = {};
+			FSkeletonData SkeletonData = {};
+			FAnimationData AnimationData = {};
+			for (const FAssetData& AssetData : AssetDataList)
+			{
+				FMeshData CurrentStaticMeshData = {};
+				FMeshData CurrentSkeletalMeshData = {};
+				FSkeletonData CurrentSkeletonData = {};
+				FAnimationData CurrentAnimationData = {};
+				
+				if (AssetData.AssetClass == UStaticMesh::StaticClass()->GetFName())
+					CurrentStaticMeshData = HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
+				else if (AssetData.AssetClass == USkeletalMesh::StaticClass()->GetFName())
+					CurrentSkeletalMeshData = HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
+				else if (AssetData.AssetClass == USkeleton::StaticClass()->GetFName())
+					CurrentSkeletonData = HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
+				else if (AssetData.AssetClass == UAnimSequence::StaticClass()->GetFName())
+					CurrentAnimationData = HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
+			
+				// Static Mesh
+				StaticMeshData.NumLOD += CurrentStaticMeshData.NumLOD;
+				StaticMeshData.NumMaterialSlot += CurrentStaticMeshData.NumMaterialSlot;
+				for (int i = 0; i < CurrentStaticMeshData.NumTriangle.Num(); i++)
+					// StaticMeshData.NumTriangle[i] += CurrentStaticMeshData.NumTriangle[i];
+				
+				// Skeletal Mesh
+				SkeletalMeshData.NumLOD += CurrentSkeletalMeshData.NumLOD;
+				SkeletalMeshData.NumMaterialSlot += CurrentSkeletalMeshData.NumMaterialSlot;
+				for (int i = 0; i < CurrentSkeletalMeshData.NumTriangle.Num(); i++)
+					// SkeletalMeshData.NumTriangle[i] += CurrentSkeletalMeshData.NumTriangle[i];
+			
+				// Skeleton Data
+				SkeletonData.NumLOD += CurrentSkeletonData.NumLOD;
+				SkeletonData.NumBones += CurrentSkeletonData.NumBones;
+			
+				// Animation Data
+				AnimationData.NumKeyFrames += CurrentAnimationData.NumKeyFrames;
+			}
+			
+			UE_LOG(LogMeshAuditor, Display, TEXT("------------------TOTAL AUDIT RESULTS------------------"));
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::StaticMesh))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("STATIC MESH:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), StaticMeshData.NumLOD)
+				for (int i = 0; i < StaticMeshData.NumTriangle.Num(); i++)
+					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, StaticMeshData.NumTriangle[i]);
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), StaticMeshData.NumMaterialSlot);
+			}
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::SkeletalMesh))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETAL MESH:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletalMeshData.NumLOD)
+				for (int i = 0; i < SkeletalMeshData.NumTriangle.Num(); i++)
+					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, SkeletalMeshData.NumTriangle[i]);
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), SkeletalMeshData.NumMaterialSlot);
+			}
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Skeleton))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETON:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletonData.NumLOD);
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Bones: %llu"), SkeletonData.NumBones);
+			}
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Animation))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("ANIMATION:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Key Frames: %llu"), AnimationData.NumKeyFrames);
+			}
+			UE_LOG(LogMeshAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+		}
+		break;
+	case EAuditType::Average:
+		UE_LOG(LogMeshAuditor, Display, TEXT("NO AVAILABLE IMPLEMENTATION FOR AVERAGE"));
+		break;
 	}
-
+	
+	
 }
 
 int32 UMeshAuditorBlueprintLibrary::AddIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag)
@@ -63,40 +180,39 @@ TArray<FName> UMeshAuditorBlueprintLibrary::GetClassNamesFromIncludes(int32 Incl
 	return ClassNames;
 }
 
-void UMeshAuditorBlueprintLibrary::HandleStaticMesh(const UStaticMesh* StaticMesh)
+FMeshData UMeshAuditorBlueprintLibrary::HandleStaticMesh(const UStaticMesh* StaticMesh)
 {
-	UE_LOG(LogTemp, Log, TEXT("Static Mesh: %s --------------------------------"), *(StaticMesh->GetName()));
-	const int32 NumLODs = StaticMesh->GetNumLODs();
-	UE_LOG(LogTemp, Log, TEXT("Static Mesh: Number of LODs: %d"), NumLODs);
-
-	for (int32 LODIndex = 0; LODIndex < NumLODs; ++LODIndex)
+	FMeshData MeshData = {};
+	
+	MeshData.NumLOD = StaticMesh->GetNumLODs();
+	
+	for (int32 LODIndex = 0; LODIndex < MeshData.NumLOD; LODIndex++)
 	{
 		const FStaticMeshLODResources& LODResources = StaticMesh->GetRenderData()->LODResources[LODIndex];
-		int32 TriangleCount = LODResources.GetNumTriangles();
-		UE_LOG(LogTemp, Log, TEXT("  LOD %d: %d triangles"), LODIndex, TriangleCount);
+		MeshData.NumTriangle.Add(LODResources.GetNumTriangles());
 	}
 
-	const int32 NumMaterialSlots = StaticMesh->GetStaticMaterials().Num();
-	UE_LOG(LogTemp, Log, TEXT("Static Mesh: Number of Material Slots: %d"), NumMaterialSlots);
+	MeshData.NumMaterialSlot = StaticMesh->GetStaticMaterials().Num();
+
+	return MeshData;
 }
 
-void UMeshAuditorBlueprintLibrary::HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh)
+FMeshData UMeshAuditorBlueprintLibrary::HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh)
 {
-	UE_LOG(LogTemp, Log, TEXT("Skeletal Mesh: %s --------------------------------"), *(SkeletalMesh->GetName()));
+	FMeshData MeshData = {};
 	// Get the rendering data
 	FSkeletalMeshRenderData* RenderData = SkeletalMesh->GetResourceForRendering();
 	if (!RenderData)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No render data found for Skeletal Mesh: %s"), *SkeletalMesh->GetName());
-		return;
+		UE_LOG(LogMeshAuditor, Warning, TEXT("No render data found for Skeletal Mesh: %s"), *SkeletalMesh->GetName());
+		return MeshData;
 	}
 
 	// 1. Get the number of LODs
-	const int32 NumLODs = RenderData->LODRenderData.Num();
-	UE_LOG(LogTemp, Log, TEXT("Skeletal Mesh: Number of LODs: %d"), NumLODs);
-
+	MeshData.NumLOD = RenderData->LODRenderData.Num();
+	
 	// 2. Get triangle count per LOD
-	for (int32 LODIndex = 0; LODIndex < NumLODs; ++LODIndex)
+	for (int32 LODIndex = 0; LODIndex < MeshData.NumLOD; LODIndex++)
 	{
 		const FSkeletalMeshLODRenderData& LODData = RenderData->LODRenderData[LODIndex];
 
@@ -107,24 +223,25 @@ void UMeshAuditorBlueprintLibrary::HandleSkeletalMesh(const USkeletalMesh* Skele
 			TriangleCount += Section.NumTriangles;
 		}
 
-		UE_LOG(LogTemp, Log, TEXT("  LOD %d: %d triangles"), LODIndex, TriangleCount);
+		MeshData.NumTriangle.Add(TriangleCount);
 	}
 
 	// 3. Get the number of material slots
-	int32 NumMaterialSlots = SkeletalMesh->GetMaterials().Num();
-	UE_LOG(LogTemp, Log, TEXT("Skeletal Mesh: Number of Material Slots: %d"), NumMaterialSlots);
+	MeshData.NumMaterialSlot = SkeletalMesh->GetMaterials().Num();
+	
+	return MeshData;
 }
 
-void UMeshAuditorBlueprintLibrary::HandleSkeleton(const USkeleton* Skeleton)
+FSkeletonData UMeshAuditorBlueprintLibrary::HandleSkeleton(const USkeleton* Skeleton)
 {
-	UE_LOG(LogTemp, Log, TEXT("Skeleton: %s --------------------------------"), *(Skeleton->GetName()));
-	const int32 NumBones = Skeleton->GetReferenceSkeleton().GetNum();
-	UE_LOG(LogTemp, Log, TEXT("Skeleton: Number of Bones: %d"), NumBones);
+	FSkeletonData SkeletonData = {};
+	SkeletonData.NumBones =  Skeleton->GetReferenceSkeleton().GetNum();
+	return SkeletonData;
 }
 
-void UMeshAuditorBlueprintLibrary::HandleAnimation(const UAnimSequence* Animation)
+FAnimationData UMeshAuditorBlueprintLibrary::HandleAnimation(const UAnimSequence* Animation)
 {
-	UE_LOG(LogTemp, Log, TEXT("Animation: %s --------------------------------"), *(Animation->GetName()));
-	const int32 NumKeyFrames = Animation->GetNumberOfSampledKeys();
-	UE_LOG(LogTemp, Log, TEXT("Animation Sequence: Number of Key Frames: %d"), NumKeyFrames);
+	FAnimationData AnimData = {};
+	AnimData.NumKeyFrames = Animation->GetNumberOfSampledKeys();
+	return AnimData; 
 }
