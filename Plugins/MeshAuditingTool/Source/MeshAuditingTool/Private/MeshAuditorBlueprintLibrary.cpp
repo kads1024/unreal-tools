@@ -81,38 +81,43 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAu
 			FAnimationData AnimationData = {};
 			for (const FAssetData& AssetData : AssetDataList)
 			{
-				FMeshData CurrentStaticMeshData = {};
-				FMeshData CurrentSkeletalMeshData = {};
-				FSkeletonData CurrentSkeletonData = {};
-				FAnimationData CurrentAnimationData = {};
 				
 				if (AssetData.AssetClass == UStaticMesh::StaticClass()->GetFName())
-					CurrentStaticMeshData = HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
+				{
+					FMeshData Data = HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
+
+					// Static Mesh
+					StaticMeshData.NumLOD += Data.NumLOD;
+					StaticMeshData.NumMaterialSlot += Data.NumMaterialSlot;
+					// for (int i = 0; i < Data.NumTriangle.Num(); i++)
+						// StaticMeshData.NumTriangle[i] += Data.NumTriangle[i];
+				}
 				else if (AssetData.AssetClass == USkeletalMesh::StaticClass()->GetFName())
-					CurrentSkeletalMeshData = HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
+				{
+					FMeshData Data = HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
+					// Skeletal Mesh
+					SkeletalMeshData.NumLOD += Data.NumLOD;
+					SkeletalMeshData.NumMaterialSlot += Data.NumMaterialSlot;
+					// for (int i = 0; i < CurrentSkeletalMeshData.NumTriangle.Num(); i++)
+						// SkeletalMeshData.NumTriangle[i] += CurrentSkeletalMeshData.NumTriangle[i];
+				}
+					
 				else if (AssetData.AssetClass == USkeleton::StaticClass()->GetFName())
-					CurrentSkeletonData = HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
+				{
+					auto [NumLOD, NumBones] = HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
+					
+					// Skeleton Data
+					SkeletonData.NumLOD += NumLOD;
+					SkeletonData.NumBones += NumBones;
+				}
+					
 				else if (AssetData.AssetClass == UAnimSequence::StaticClass()->GetFName())
-					CurrentAnimationData = HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
-			
-				// Static Mesh
-				StaticMeshData.NumLOD += CurrentStaticMeshData.NumLOD;
-				StaticMeshData.NumMaterialSlot += CurrentStaticMeshData.NumMaterialSlot;
-				for (int i = 0; i < CurrentStaticMeshData.NumTriangle.Num(); i++)
-					// StaticMeshData.NumTriangle[i] += CurrentStaticMeshData.NumTriangle[i];
-				
-				// Skeletal Mesh
-				SkeletalMeshData.NumLOD += CurrentSkeletalMeshData.NumLOD;
-				SkeletalMeshData.NumMaterialSlot += CurrentSkeletalMeshData.NumMaterialSlot;
-				for (int i = 0; i < CurrentSkeletalMeshData.NumTriangle.Num(); i++)
-					// SkeletalMeshData.NumTriangle[i] += CurrentSkeletalMeshData.NumTriangle[i];
-			
-				// Skeleton Data
-				SkeletonData.NumLOD += CurrentSkeletonData.NumLOD;
-				SkeletonData.NumBones += CurrentSkeletonData.NumBones;
-			
-				// Animation Data
-				AnimationData.NumKeyFrames += CurrentAnimationData.NumKeyFrames;
+				{
+					auto [NumKeyFrames] = HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
+					
+					// Animation Data
+					AnimationData.NumKeyFrames += NumKeyFrames;
+				}
 			}
 			
 			UE_LOG(LogMeshAuditor, Display, TEXT("------------------TOTAL AUDIT RESULTS------------------"));
@@ -147,7 +152,89 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAu
 		}
 		break;
 	case EAuditType::Average:
-		UE_LOG(LogMeshAuditor, Display, TEXT("NO AVAILABLE IMPLEMENTATION FOR AVERAGE"));
+		{
+			FMeshData StaticMeshData = {};
+			FMeshData SkeletalMeshData = {};
+			FSkeletonData SkeletonData = {};
+			FAnimationData AnimationData = {};
+
+			int StaticCount = 0, SkeletalCount = 0, SkeletonCount = 0, AnimCount = 0;
+			
+			for (const FAssetData& AssetData : AssetDataList)
+			{
+				
+				if (AssetData.AssetClass == UStaticMesh::StaticClass()->GetFName())
+				{
+					FMeshData Data = HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
+
+					// Static Mesh
+					StaticMeshData.NumLOD += Data.NumLOD;
+					StaticMeshData.NumMaterialSlot += Data.NumMaterialSlot;
+					// for (int i = 0; i < Data.NumTriangle.Num(); i++)
+						// StaticMeshData.NumTriangle[i] += Data.NumTriangle[i];
+					StaticCount++;
+				}
+				else if (AssetData.AssetClass == USkeletalMesh::StaticClass()->GetFName())
+				{
+					FMeshData Data = HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
+					// Skeletal Mesh
+					SkeletalMeshData.NumLOD += Data.NumLOD;
+					SkeletalMeshData.NumMaterialSlot += Data.NumMaterialSlot;
+					// for (int i = 0; i < CurrentSkeletalMeshData.NumTriangle.Num(); i++)
+						// SkeletalMeshData.NumTriangle[i] += CurrentSkeletalMeshData.NumTriangle[i];
+					SkeletalCount++;
+				}
+					
+				else if (AssetData.AssetClass == USkeleton::StaticClass()->GetFName())
+				{
+					auto [NumLOD, NumBones] = HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
+					
+					// Skeleton Data
+					SkeletonData.NumLOD += NumLOD;
+					SkeletonData.NumBones += NumBones;
+					SkeletonCount++;
+				}
+					
+				else if (AssetData.AssetClass == UAnimSequence::StaticClass()->GetFName())
+				{
+					auto [NumKeyFrames] = HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
+					
+					// Animation Data
+					AnimationData.NumKeyFrames += NumKeyFrames;
+					AnimCount++;
+				}
+			}
+			
+			UE_LOG(LogMeshAuditor, Display, TEXT("------------------AVERAGE AUDIT RESULTS------------------"));
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::StaticMesh))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("STATIC MESH:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), StaticMeshData.NumLOD / StaticCount)
+				for (int i = 0; i < StaticMeshData.NumTriangle.Num(); i++)
+					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, StaticMeshData.NumTriangle[i] / StaticCount);
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), StaticMeshData.NumMaterialSlot / StaticCount);
+			}
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::SkeletalMesh))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETAL MESH:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletalMeshData.NumLOD / SkeletalCount)
+				for (int i = 0; i < SkeletalMeshData.NumTriangle.Num(); i++)
+					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, SkeletalMeshData.NumTriangle[i] / SkeletalCount);
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), SkeletalMeshData.NumMaterialSlot / SkeletalCount);
+			}
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Skeleton))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETON:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletonData.NumLOD / SkeletonCount);
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Bones: %llu"), SkeletonData.NumBones / SkeletonCount);
+			}
+			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Animation))
+			{
+				UE_LOG(LogMeshAuditor, Display, TEXT("ANIMATION:"));
+				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Key Frames: %llu"), AnimationData.NumKeyFrames / AnimCount);
+			}
+			UE_LOG(LogMeshAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+		}
 		break;
 	}
 	
