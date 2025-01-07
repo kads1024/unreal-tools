@@ -1,16 +1,22 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MeshAuditorBlueprintLibrary.h"
+#include "EUT_AssetAuditor.h"
+#include "Async/TaskGraphInterfaces.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
-DEFINE_LOG_CATEGORY(LogMeshAuditor);
+DEFINE_LOG_CATEGORY(LogAssetAuditor);
 
-void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAuditType AuditType)
+void UEUT_AssetAuditor::BeginExecution()
 {
+	Super::BeginExecution();
+
+	SetTaskNotificationText(FText::FromString("Starting Task: Audit Assets..."));
+
 	if (AuditSettings.Includes ==  0)
 	{
-		UE_LOG(LogMeshAuditor, Log, TEXT("PLEASE SELECT INCLUDES FIRST BEFORE RUNNING AUDITOR"))
+		UE_LOG(LogAssetAuditor, Log, TEXT("PLEASE SELECT INCLUDES FIRST BEFORE RUNNING AUDITOR"))
+		FinishExecutingTask();
 		return;
 	}
 	
@@ -29,48 +35,54 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAu
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
 	// Process the results
-	switch (AuditType)
+	switch (AuditSettings.AuditType)
 	{
 	case EAuditType::Individual:
 		{
-			UE_LOG(LogMeshAuditor, Display, TEXT("------------------INDIVIDUAL AUDIT RESULTS------------------"));
+			UE_LOG(LogAssetAuditor, Display, TEXT("------------------INDIVIDUAL AUDIT RESULTS------------------"));
 			for (const FAssetData& AssetData : AssetDataList)
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("ASSET NAME: %s --------------------------"), *(AssetData.GetAsset()->GetName()));
+				UE_LOG(LogAssetAuditor, Display, TEXT("ASSET NAME: %s --------------------------"), *(AssetData.GetAsset()->GetName()));
 				if (AssetData.AssetClass == UStaticMesh::StaticClass()->GetFName())
 				{
 					auto [NumLOD, NumTriangle, NumMaterialSlot] = HandleStaticMesh(Cast<UStaticMesh>(AssetData.GetAsset()));
-					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: STATIC MESH"));
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD)
+					UE_LOG(LogAssetAuditor, Display, TEXT("ASSET TYPE: STATIC MESH"));
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD)
 					for (int i = 0; i < NumTriangle.Num(); i++)
-						UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, NumTriangle[i]);
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), NumMaterialSlot);
+						UE_LOG(LogAssetAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, NumTriangle[i]);
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Material Slots: %llu"), NumMaterialSlot);
 				}
 				else if (AssetData.AssetClass == USkeletalMesh::StaticClass()->GetFName())
 				{
 					auto [NumLOD, NumTriangle, NumMaterialSlot] = HandleSkeletalMesh(Cast<USkeletalMesh>(AssetData.GetAsset()));
-					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: SKELETAL MESH"));
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD)
+					UE_LOG(LogAssetAuditor, Display, TEXT("ASSET TYPE: SKELETAL MESH"));
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD)
 					for (int i = 0; i < NumTriangle.Num(); i++)
-						UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, NumTriangle[i]);
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), NumMaterialSlot);
+						UE_LOG(LogAssetAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, NumTriangle[i]);
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Material Slots: %llu"), NumMaterialSlot);
 				}
 				else if (AssetData.AssetClass == USkeleton::StaticClass()->GetFName())
 				{
 					auto [NumLOD, NumBones] = HandleSkeleton(Cast<USkeleton>(AssetData.GetAsset()));
-					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: SKELETON"));
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD);
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Bones: %llu"), NumBones);
+					UE_LOG(LogAssetAuditor, Display, TEXT("ASSET TYPE: SKELETON"));
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), NumLOD);
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Bones: %llu"), NumBones);
 				}
 				else if (AssetData.AssetClass == UAnimSequence::StaticClass()->GetFName())
 				{
 					auto [NumKeyFrames] = HandleAnimation(Cast<UAnimSequence>(AssetData.GetAsset()));
-					UE_LOG(LogMeshAuditor, Display, TEXT("ASSET TYPE: ANIMATION"));
-					UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Key Frames: %llu"), NumKeyFrames);
+					UE_LOG(LogAssetAuditor, Display, TEXT("ASSET TYPE: ANIMATION"));
+					UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Key Frames: %llu"), NumKeyFrames);
 				}
-				UE_LOG(LogMeshAuditor, Display, TEXT("------------------------------------------------------------"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("------------------------------------------------------------"));
+				if (WasCancelRequested())
+				{
+					UE_LOG(LogAssetAuditor, Display, TEXT("------------------AUDIT CANCELLED------------------"));
+					FinishExecutingTask();
+					return;
+				}
 			}
-			UE_LOG(LogMeshAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+			UE_LOG(LogAssetAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
 		}
 		break;
 	case EAuditType::Total:
@@ -118,37 +130,43 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAu
 					// Animation Data
 					AnimationData.NumKeyFrames += NumKeyFrames;
 				}
+				if (WasCancelRequested())
+				{
+					UE_LOG(LogAssetAuditor, Display, TEXT("------------------AUDIT CANCELLED------------------"));
+					FinishExecutingTask();
+					return;
+				}
 			}
 			
-			UE_LOG(LogMeshAuditor, Display, TEXT("------------------TOTAL AUDIT RESULTS------------------"));
+			UE_LOG(LogAssetAuditor, Display, TEXT("------------------TOTAL AUDIT RESULTS------------------"));
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::StaticMesh))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("STATIC MESH:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), StaticMeshData.NumLOD)
+				UE_LOG(LogAssetAuditor, Display, TEXT("STATIC MESH:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), StaticMeshData.NumLOD)
 				for (int i = 0; i < StaticMeshData.NumTriangle.Num(); i++)
-					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, StaticMeshData.NumTriangle[i]);
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), StaticMeshData.NumMaterialSlot);
+					UE_LOG(LogAssetAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, StaticMeshData.NumTriangle[i]);
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Material Slots: %llu"), StaticMeshData.NumMaterialSlot);
 			}
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::SkeletalMesh))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETAL MESH:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletalMeshData.NumLOD)
+				UE_LOG(LogAssetAuditor, Display, TEXT("SKELETAL MESH:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletalMeshData.NumLOD)
 				for (int i = 0; i < SkeletalMeshData.NumTriangle.Num(); i++)
-					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, SkeletalMeshData.NumTriangle[i]);
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), SkeletalMeshData.NumMaterialSlot);
+					UE_LOG(LogAssetAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, SkeletalMeshData.NumTriangle[i]);
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Material Slots: %llu"), SkeletalMeshData.NumMaterialSlot);
 			}
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Skeleton))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETON:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletonData.NumLOD);
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Bones: %llu"), SkeletonData.NumBones);
+				UE_LOG(LogAssetAuditor, Display, TEXT("SKELETON:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletonData.NumLOD);
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Bones: %llu"), SkeletonData.NumBones);
 			}
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Animation))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("ANIMATION:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Key Frames: %llu"), AnimationData.NumKeyFrames);
+				UE_LOG(LogAssetAuditor, Display, TEXT("ANIMATION:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Key Frames: %llu"), AnimationData.NumKeyFrames);
 			}
-			UE_LOG(LogMeshAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+			UE_LOG(LogAssetAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
 		}
 		break;
 	case EAuditType::Average:
@@ -203,55 +221,74 @@ void UMeshAuditorBlueprintLibrary::AuditAssets(FAuditSettings AuditSettings, EAu
 					AnimationData.NumKeyFrames += NumKeyFrames;
 					AnimCount++;
 				}
+				if (WasCancelRequested())
+				{
+					UE_LOG(LogAssetAuditor, Display, TEXT("------------------AUDIT CANCELLED------------------"));
+					FinishExecutingTask();
+					return;
+				}
 			}
 			
-			UE_LOG(LogMeshAuditor, Display, TEXT("------------------AVERAGE AUDIT RESULTS------------------"));
+			UE_LOG(LogAssetAuditor, Display, TEXT("------------------AVERAGE AUDIT RESULTS------------------"));
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::StaticMesh))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("STATIC MESH:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), StaticMeshData.NumLOD / StaticCount)
+				UE_LOG(LogAssetAuditor, Display, TEXT("STATIC MESH:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), StaticMeshData.NumLOD / StaticCount)
 				for (int i = 0; i < StaticMeshData.NumTriangle.Num(); i++)
-					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, StaticMeshData.NumTriangle[i] / StaticCount);
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), StaticMeshData.NumMaterialSlot / StaticCount);
+					UE_LOG(LogAssetAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, StaticMeshData.NumTriangle[i] / StaticCount);
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Material Slots: %llu"), StaticMeshData.NumMaterialSlot / StaticCount);
 			}
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::SkeletalMesh))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETAL MESH:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletalMeshData.NumLOD / SkeletalCount)
+				UE_LOG(LogAssetAuditor, Display, TEXT("SKELETAL MESH:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletalMeshData.NumLOD / SkeletalCount)
 				for (int i = 0; i < SkeletalMeshData.NumTriangle.Num(); i++)
-					UE_LOG(LogMeshAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, SkeletalMeshData.NumTriangle[i] / SkeletalCount);
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Material Slots: %llu"), SkeletalMeshData.NumMaterialSlot / SkeletalCount);
+					UE_LOG(LogAssetAuditor, Display, TEXT("        Number of Triangles on LOD[%i]: %llu"), i, SkeletalMeshData.NumTriangle[i] / SkeletalCount);
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Material Slots: %llu"), SkeletalMeshData.NumMaterialSlot / SkeletalCount);
 			}
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Skeleton))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("SKELETON:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletonData.NumLOD / SkeletonCount);
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Bones: %llu"), SkeletonData.NumBones / SkeletonCount);
+				UE_LOG(LogAssetAuditor, Display, TEXT("SKELETON:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of LODs: %llu"), SkeletonData.NumLOD / SkeletonCount);
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Bones: %llu"), SkeletonData.NumBones / SkeletonCount);
 			}
 			if (EnumHasAnyFlags(static_cast<EAssetFlags>(AuditSettings.Includes), EAssetFlags::Animation))
 			{
-				UE_LOG(LogMeshAuditor, Display, TEXT("ANIMATION:"));
-				UE_LOG(LogMeshAuditor, Display, TEXT("     Number of Key Frames: %llu"), AnimationData.NumKeyFrames / AnimCount);
+				UE_LOG(LogAssetAuditor, Display, TEXT("ANIMATION:"));
+				UE_LOG(LogAssetAuditor, Display, TEXT("     Number of Key Frames: %llu"), AnimationData.NumKeyFrames / AnimCount);
 			}
-			UE_LOG(LogMeshAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+			UE_LOG(LogAssetAuditor, Display, TEXT("-------------------END OF AUDIT-----------------------------"));
+			
 		}
 		break;
 	}
 	
 	
+
+	
+	FinishExecutingTask();
 }
 
-int32 UMeshAuditorBlueprintLibrary::AddIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag)
+
+void UEUT_AssetAuditor::UpdateIncludeFlag(EAssetFlags InAssetFlag, bool bIsFlagIncluded)
 {
-	return CurrentFlags | static_cast<int32>(AssetFlag);
+	if (bIsFlagIncluded)
+		AuditSettings.Includes |= static_cast<int32>(InAssetFlag);
+	else
+		AuditSettings.Includes &= ~static_cast<int32>(InAssetFlag);
 }
 
-int32 UMeshAuditorBlueprintLibrary::RemoveIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag)
+void UEUT_AssetAuditor::SetAuditType(EAuditType InAuditType)
 {
-	return CurrentFlags & (~static_cast<int32>(AssetFlag));
+	AuditSettings.AuditType = InAuditType;
 }
 
-TArray<FName> UMeshAuditorBlueprintLibrary::GetClassNamesFromIncludes(int32 Includes)
+void UEUT_AssetAuditor::SetRootDirectory(FName InRootDirectory)
+{
+	AuditSettings.RootDirectory = InRootDirectory;
+}
+
+TArray<FName> UEUT_AssetAuditor::GetClassNamesFromIncludes(int32 Includes)
 {
 	TArray<FName> ClassNames = TArray<FName>();
 	// Add class names based on user input
@@ -267,7 +304,7 @@ TArray<FName> UMeshAuditorBlueprintLibrary::GetClassNamesFromIncludes(int32 Incl
 	return ClassNames;
 }
 
-FMeshData UMeshAuditorBlueprintLibrary::HandleStaticMesh(const UStaticMesh* StaticMesh)
+FMeshData UEUT_AssetAuditor::HandleStaticMesh(const UStaticMesh* StaticMesh)
 {
 	FMeshData MeshData = {};
 	
@@ -284,14 +321,14 @@ FMeshData UMeshAuditorBlueprintLibrary::HandleStaticMesh(const UStaticMesh* Stat
 	return MeshData;
 }
 
-FMeshData UMeshAuditorBlueprintLibrary::HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh)
+FMeshData UEUT_AssetAuditor::HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh)
 {
 	FMeshData MeshData = {};
 	// Get the rendering data
 	FSkeletalMeshRenderData* RenderData = SkeletalMesh->GetResourceForRendering();
 	if (!RenderData)
 	{
-		UE_LOG(LogMeshAuditor, Warning, TEXT("No render data found for Skeletal Mesh: %s"), *SkeletalMesh->GetName());
+		UE_LOG(LogAssetAuditor, Warning, TEXT("No render data found for Skeletal Mesh: %s"), *SkeletalMesh->GetName());
 		return MeshData;
 	}
 
@@ -319,14 +356,14 @@ FMeshData UMeshAuditorBlueprintLibrary::HandleSkeletalMesh(const USkeletalMesh* 
 	return MeshData;
 }
 
-FSkeletonData UMeshAuditorBlueprintLibrary::HandleSkeleton(const USkeleton* Skeleton)
+FSkeletonData UEUT_AssetAuditor::HandleSkeleton(const USkeleton* Skeleton)
 {
 	FSkeletonData SkeletonData = {};
 	SkeletonData.NumBones =  Skeleton->GetReferenceSkeleton().GetNum();
 	return SkeletonData;
 }
 
-FAnimationData UMeshAuditorBlueprintLibrary::HandleAnimation(const UAnimSequence* Animation)
+FAnimationData UEUT_AssetAuditor::HandleAnimation(const UAnimSequence* Animation)
 {
 	FAnimationData AnimData = {};
 	AnimData.NumKeyFrames = Animation->GetNumberOfSampledKeys();

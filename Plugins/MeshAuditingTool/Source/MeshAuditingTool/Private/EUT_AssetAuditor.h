@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
-#include "MeshAuditorBlueprintLibrary.generated.h"
+#include "EditorUtilityTask.h"
+#include "EUT_AssetAuditor.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogMeshAuditor, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogAssetAuditor, Log, All);
 
 UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
 enum class EAssetFlags : uint8
 {
 	None = 0 UMETA(Hidden),
-	StaticMesh = 1, // 0b00000001
-	SkeletalMesh = 2 , // 0b00000010
-	Skeleton = 4, // 0b00000100
-	Animation = 8, // 0b00001000
+	StaticMesh = 1, // 0x00000001
+	SkeletalMesh = 2 , // 0x00000010
+	Skeleton = 4, // 0xb00000100
+	Animation = 8, // 0x00001000
 };
 ENUM_CLASS_FLAGS(EAssetFlags)
 
@@ -37,6 +37,9 @@ struct FAuditSettings
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AuditSettings, meta=(Bitmask, BitmaskEnum=EAssetFlags))
 	int32 Includes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AuditSettings)
+	EAuditType AuditType;
 };
 
 USTRUCT()
@@ -75,39 +78,45 @@ struct FAnimationData
 	UPROPERTY()
 	uint64 NumKeyFrames;
 };
+
 /**
  * 
  */
 UCLASS()
-class UMeshAuditorBlueprintLibrary : public UBlueprintFunctionLibrary
+class UEUT_AssetAuditor : public UEditorUtilityTask
 {
 	GENERATED_BODY()
 	
 public:
-	
 	UFUNCTION(BlueprintCallable, Category = "MeshAuditingTool")
-	static void AuditAssets(FAuditSettings AuditSettings, EAuditType AuditType);
-	
-	UFUNCTION(BlueprintPure, Category = "MeshAuditingTool")
-	static int32 AddIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag);
+	void UpdateIncludeFlag(EAssetFlags InAssetFlag, bool bIsFlagIncluded);
 
-	UFUNCTION(BlueprintPure, Category = "MeshAuditingTool")
-	static int32 RemoveIncludeFlag(int32 CurrentFlags, EAssetFlags AssetFlag);
+	UFUNCTION(BlueprintCallable, Category = "MeshAuditingTool")
+	void SetAuditType(EAuditType InAuditType);
+
+	UFUNCTION(BlueprintCallable, Category = "MeshAuditingTool")
+	void SetRootDirectory(FName InRootDirectory);
+	
+protected:
+	virtual void BeginExecution() override;
+
+private:
+	UPROPERTY()
+	FAuditSettings AuditSettings;
 	
 private:
-	
 	UFUNCTION()
 	static TArray<FName> GetClassNamesFromIncludes(int32 Includes);
 
 	UFUNCTION()
-	static FMeshData HandleStaticMesh(const UStaticMesh* StaticMesh);
+	FMeshData HandleStaticMesh(const UStaticMesh* StaticMesh);
 
 	UFUNCTION()
-	static FMeshData HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh);
+	FMeshData HandleSkeletalMesh(const USkeletalMesh* SkeletalMesh);
 
 	UFUNCTION()
-	static FSkeletonData HandleSkeleton(const USkeleton* Skeleton);
+	FSkeletonData HandleSkeleton(const USkeleton* Skeleton);
 
 	UFUNCTION()
-	static FAnimationData HandleAnimation(const UAnimSequence* Animation);
+	FAnimationData HandleAnimation(const UAnimSequence* Animation);
 };
