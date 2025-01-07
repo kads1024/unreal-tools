@@ -8,11 +8,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="98a787be-b154-42dc-b33d-d97c2c61cc3f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Config/DefaultMeshAuditingTool.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.UnrealTools.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.UnrealTools.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StarterContent/Maps/Minimal_Default.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/StarterContent/Maps/Minimal_Default.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Content/EUT_Audit.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Content/EUW_MeshAuditor.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Content/EUW_MeshAuditor.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/MeshAuditingTool.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/MeshAuditingTool.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.h" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,11 +25,12 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../UnrealEngine/UE_5.0/Engine/Source/Editor/Blutility/Classes/EditorUtilityTask.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../UnrealEngine/UE_5.0/Engine/Source/Runtime/Core/Public/CoreGlobals.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/MeshAuditingTool/MeshAuditingTool.uplugin" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/MeshAuditingTool.Build.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditingTool.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/MeshAuditingTool/Source/MeshAuditingTool/Private/MeshAuditorBlueprintLibrary.cpp" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -142,6 +145,9 @@
       <workItem from="1736008920321" duration="1101000" />
       <workItem from="1736010044414" duration="887000" />
       <workItem from="1736057000511" duration="21714000" />
+      <workItem from="1736092349149" duration="934000" />
+      <workItem from="1736145998579" duration="1206000" />
+      <workItem from="1736240964041" duration="7408000" />
     </task>
     <servers />
   </component>

@@ -38,7 +38,8 @@ public class MeshAuditingTool : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore", 
-				"AssetRegistry"
+				"AssetRegistry", 
+				"Blutility"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
