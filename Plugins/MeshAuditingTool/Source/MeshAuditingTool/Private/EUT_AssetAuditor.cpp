@@ -11,7 +11,10 @@ void UEUT_AssetAuditor::BeginExecution()
 {
 	Super::BeginExecution();
 
-	SetTaskNotificationText(FText::FromString("Starting Task: Audit Assets..."));
+	AsyncTask(ENamedThreads::GameThread, [this]
+	{
+
+		SetTaskNotificationText(FText::FromString("Starting Task: Audit Assets..."));
 
 	if (AuditSettings.Includes ==  0)
 	{
@@ -35,7 +38,7 @@ void UEUT_AssetAuditor::BeginExecution()
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
 	// Process the results
-	switch (AuditSettings.AuditType)
+	switch (AuditSettings.AuditType) // Can only be done on game thread
 	{
 	case EAuditType::Individual:
 		{
@@ -262,11 +265,9 @@ void UEUT_AssetAuditor::BeginExecution()
 		}
 		break;
 	}
-	
-	
-
-	
+		
 	FinishExecutingTask();
+	});
 }
 
 
