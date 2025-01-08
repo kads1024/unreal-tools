@@ -17,7 +17,7 @@ You start the Audit by simply clicking the icon. This should open a window that 
 
 There are various settings that you can use to tell the auditor how to audit assets.
 
-- **Root Directory:**  Tells the auditor what folder to search from.
+- **Root Directory:**  Tells the auditor what folder to search from. To search everywhere, put in `/Game/`
 - **Include Static Mesh/Skeletal Mesh/Skeleton/Animation:** Check the type of asset you want to search for and audit.
 - **Audit Type:** Indicates what type of audit you want.
   - `Individual`: Lists down all found assets individually and their data.
@@ -63,7 +63,7 @@ LogAssetAuditor: Display: ------------------------------------------------------
 LogAssetAuditor: Display: -------------------END OF AUDIT-----------------------------
 ```
 
-## Total Results
+### Total Results
 ```
 LogAssetAuditor: Display: ------------------TOTAL AUDIT RESULTS------------------
 LogAssetAuditor: Display: STATIC MESH:
@@ -80,7 +80,7 @@ LogAssetAuditor: Display:      Number of Key Frames: 4241
 LogAssetAuditor: Display: -------------------END OF AUDIT-----------------------------
 ```
 
-## Average Results
+### Average Results
 ```
 LogAssetAuditor: Display: ------------------AVERAGE AUDIT RESULTS------------------
 LogAssetAuditor: Display: STATIC MESH:
